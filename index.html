@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>HEX AI Studio — Liquid Chat | Vision + File Manager (PDF Support)</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Highlight.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
+    <!-- Marked.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.2.12/marked.min.js"></script>
+    <!-- PDF.js for PDF text extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- Emoji Picker -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.18.4/index.js"></script>
+    <!-- GTranslate -->
+    <script>window.gtranslateSettings = {"default_language":"en","detect_browser_language":true,"wrapper_selector":".gtranslate_wrapper"}</script>
+    <script src="https://cdn.gtranslate.net/widgets/latest/dropdown.js" defer></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-gradient-start: #f6f9fc;
+            --bg-gradient-end: #eef2f7;
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --text-primary: #1a2c3e;
+            --text-secondary: #4a627a;
+            --accent-liquid: #3b82f6;
+            --accent-glow: #60a5fa;
+            --shadow-liquid: 0 8px 32px rgba(0, 0, 0, 0.05);
+            --bubble-user: rgba(59,130,246,0.12);
+            --bubble-ai: rgba(255,255,255,0.7);
+            --sidebar-bg: rgba(255,255,255,0.5);
+            --border-glow: rgba(59,130,246,0.25);
+            --delete-icon-color: #94a3b8;
+            --gradient-1: #3b82f6;
+            --gradient-2: #a855f7;
+            --gradient-3: #06b6d4;
+            --emoji-bg: #ffffff;
+            --emoji-text: #1e293b;
+            --ai-text-glow: rgba(59,130,246,0.5);
+            --attach-bg: rgba(255,255,240,0.6);
+            --rainbow-glow: rgba(255,0,128,0.4);
+        }
+        body.dark {
+            --bg-gradient-start: #0a0c15;
+            --bg-gradient-end: #10131f;
+            --glass-bg: rgba(18, 22, 35, 0.65);
+            --glass-border: rgba(55, 65, 85, 0.5);
+            --text-primary: #eef2ff;
+            --text-secondary: #9ca3af;
+            --accent-liquid: #3b82f6;
+            --accent-glow: #8bb4fe;
+            --shadow-liquid: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --bubble-user: rgba(59,130,246,0.2);
+            --bubble-ai: rgba(30, 35, 48, 0.7);
+            --sidebar-bg: rgba(15, 18, 28, 0.7);
+            --border-glow: #3b82f680;
+            --delete-icon-color: #64748b;
+            --gradient-1: #60a5fa;
+            --gradient-2: #c084fc;
+            --gradient-3: #22d3ee;
+            --emoji-bg: #1e293b;
+            --emoji-text: #e2e8f0;
+            --ai-text-glow: #8bb4fe;
+            --attach-bg: rgba(30,41,59,0.7);
+        }
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            backdrop-filter: blur(2px);
+        }
+        emoji-picker {
+            --background: var(--emoji-bg);
+            --border-color: var(--glass-border);
+            --input-border-color: var(--accent-glow);
+            --indicator-color: var(--accent-liquid);
+            --category-button-color: var(--text-secondary);
+            --category-button-color-active: var(--accent-liquid);
+            --shadow: var(--shadow-liquid);
+            border-radius: 28px;
+            max-height: 380px;
+            width: 320px;
+        }
+        body.dark emoji-picker { --background: #0f172a; --text-color: #f1f5f9; --secondary-text-color: #94a3b8; --border-color: #334155; }
+        #emojiPicker {
+            position: fixed !important;
+            bottom: 90px;
+            right: 20px;
+            z-index: 1300;
+            display: none;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.3);
+            animation: emojiRise 0.2s ease;
+        }
+        @keyframes emojiRise { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 2rem; box-shadow: var(--shadow-liquid); }
+        .app-header { background: rgba(var(--bg-gradient-start), 0.5); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-glow); padding: 12px 20px; }
+        
+        .rainbow-brand-text {
+            background: linear-gradient(90deg, #ff0a54, #ff7b00, #ffd000, #00e676, #00b0ff, #7c4dff, #ff0a54);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent !important;
+            animation: rainbowWave 2.4s linear infinite;
+            font-weight: 800;
+            text-shadow: 0 0 8px rgba(255,255,200,0.3);
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        .rainbow-brand-text:hover {
+            animation-duration: 1.2s;
+            text-shadow: 0 0 12px rgba(255,255,255,0.5);
+            letter-spacing: 0.5px;
+        }
+        .rainbow-title {
+            background: linear-gradient(135deg, #ff0a6c, #ffb347, #32cd32, #1e90ff, #bf4cff, #ff0a6c);
+            background-size: 400% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: hyperRainbow 3s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        @keyframes rainbowWave {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+        @keyframes hyperRainbow {
+            0% { background-position: 0% 0%; filter: hue-rotate(0deg); }
+            50% { background-position: 100% 100%; filter: hue-rotate(5deg); }
+            100% { background-position: 200% 0%; filter: hue-rotate(0deg); }
+        }
+        .liquid-title {
+            background: linear-gradient(135deg, #ff4d6d, #ff9e00, #06ffa5, #3a86ff, #b5179e);
+            background-size: 300% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: liquidRainbowShift 4s ease infinite;
+            font-weight: 700;
+        }
+        @keyframes liquidRainbowShift {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        .effect-rainbow {
+            background: linear-gradient(120deg, #ff0a54, #ff7b00, #ffd000, #00e676, #00b0ff, #7c4dff);
+            background-size: 400% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent !important;
+            animation: rainbowFlow 2s linear infinite;
+            font-weight: 500;
+        }
+        .effect-rainbow-shimmer {
+            background: linear-gradient(90deg, #ff0080, #ff8c00, #40ff40, #00ccff, #b300ff);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: shimmerRainbow 1.8s ease infinite;
+        }
+        @keyframes shimmerRainbow {
+            0% { background-position: 0% 50%; opacity: 0.9; }
+            100% { background-position: 200% 50%; opacity: 1; }
+        }
+        @keyframes rainbowFlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+        .effect-glitch {
+            animation: glitchText 1.2s infinite;
+            color: var(--text-primary);
+            text-shadow: 2px 0 #ff00c1, -2px 0 #00e0ff;
+        }
+        @keyframes glitchText {
+            0% { text-shadow: -2px 0 #ff00c1, 2px 0 #00e0ff; }
+            25% { text-shadow: 2px 0 #ff00c1, -2px 0 #00e0ff; }
+            50% { text-shadow: -2px 2px #ff00c1, 2px -2px #00e0ff; }
+            75% { text-shadow: 2px -2px #ff00c1, -2px 2px #00e0ff; }
+            100% { text-shadow: -2px 0 #ff00c1, 2px 0 #00e0ff; }
+        }
+        .effect-glow {
+            animation: rainbowGlowPulse 1.5s ease infinite;
+            background: linear-gradient(45deg, gold, hotpink, cyan);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        @keyframes rainbowGlowPulse {
+            0% { filter: drop-shadow(0 0 2px gold); opacity: 0.9; }
+            100% { filter: drop-shadow(0 0 12px fuchsia); opacity: 1; }
+        }
+        .effect-wave {
+            display: inline-block;
+            animation: waveText 0.8s infinite;
+            background: linear-gradient(90deg, #ff6a00, #eeff00, #00ff88);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        @keyframes waveText {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-4px); }
+        }
+        .effect-chromatic {
+            animation: chromaticAberration 0.3s infinite alternate;
+            color: white;
+            text-shadow: -1px -1px 0 red, 1px 1px 0 blue;
+        }
+        @keyframes chromaticAberration {
+            0% { text-shadow: -2px -2px 0 red, 2px 2px 0 blue; letter-spacing: 0px; }
+            100% { text-shadow: 2px 2px 0 red, -2px -2px 0 blue; letter-spacing: 0.5px; }
+        }
+        .effect-shimmer {
+            background: linear-gradient(120deg, #ffd966, #ffb347, #ff6f61, #b980f0);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: shine 1.4s linear infinite;
+        }
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
+        .chat-bubble { max-width: 85%; margin-bottom: 20px; padding: 14px 20px; border-radius: 28px; transition: all 0.2s ease; animation: liquidRise 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2); }
+        .user-bubble { background: var(--bubble-user); border-bottom-right-radius: 8px; margin-left: auto; }
+        .assistant-bubble { background: var(--bubble-ai); border-bottom-left-radius: 8px; margin-right: auto; border-left: 3px solid transparent; border-image: linear-gradient(45deg, #ff0a6c, #ffb347, #32cd32) 1; animation: borderRainbowPulse 3s infinite; }
+        @keyframes borderRainbowPulse {
+            0% { border-left-color: #ff0a6c; }
+            33% { border-left-color: #ffb347; }
+            66% { border-left-color: #32cd32; }
+            100% { border-left-color: #bf4cff; }
+        }
+        .message-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 0.7rem; color: var(--text-secondary); gap: 12px; }
+        .delete-msg-btn { background: transparent; border: none; color: var(--delete-icon-color); cursor: pointer; font-size: 0.75rem; border-radius: 40px; opacity: 0.6; transition: 0.2s; }
+        .delete-msg-btn:hover { opacity: 1; color: #ef4444; background: rgba(239,68,68,0.1); }
+        @keyframes liquidRise { 0% { opacity: 0; transform: translateY(18px) scale(0.96); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        .prompt-editor-liquid { min-height: 54px; max-height: 140px; overflow-y: auto; padding: 14px 18px; background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 44px; outline: none; font-size: 0.95rem; transition: all 0.2s; color: var(--text-primary); }
+        .prompt-editor-liquid:focus { border-color: var(--accent-liquid); box-shadow: 0 0 0 3px var(--accent-glow); }
+        .prompt-editor-liquid:empty:before { content: attr(placeholder); color: var(--text-secondary); }
+        .btn-liquid { background: var(--glass-bg); backdrop-filter: blur(8px); border: 1px solid var(--glass-border); border-radius: 40px; transition: all 0.25s ease; color: var(--text-primary); }
+        .btn-primary-liquid { background: var(--accent-liquid); border: none; border-radius: 40px; transition: all 0.2s; color: white; }
+        .btn-primary-liquid:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px var(--accent-glow); }
+        .attachment-thumb { position: relative; display: inline-flex; flex-direction: column; align-items: center; background: var(--attach-bg); border-radius: 20px; padding: 6px; margin: 4px 8px 4px 0; backdrop-filter: blur(4px); border: 1px solid var(--glass-border); max-width: 80px; }
+        .attachment-thumb img { width: 60px; height: 60px; object-fit: cover; border-radius: 14px; }
+        .attachment-thumb i { font-size: 2rem; color: var(--accent-liquid); margin: 8px; }
+        .remove-attach { position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; }
+        .user-images-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; margin-bottom: 6px; }
+        .user-img-preview { max-width: 120px; max-height: 120px; border-radius: 16px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.1); object-fit: cover; }
+        .attachments-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; padding-left: 6px; }
+        .sidebar-liquid { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; background: var(--sidebar-bg); backdrop-filter: blur(20px); border-right: 1px solid var(--border-glow); transform: translateX(-100%); transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1); z-index: 1100; display: flex; flex-direction: column; }
+        .sidebar-liquid.open { transform: translateX(0); }
+        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); z-index: 1050; display: none; }
+        .sidebar-overlay.active { display: block; }
+        @media (min-width: 768px) { .sidebar-liquid { transform: none; width: 260px; } .sidebar-overlay { display: none !important; } .mobile-only { display: none; } }
+        .chat-history-item { transition: all 0.25s; padding: 12px 16px; border-radius: 20px; margin-bottom: 4px; cursor: pointer; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
+        .chat-history-item:hover { background: var(--accent-glow); color: white; }
+        .chat-history-item.active { background: linear-gradient(95deg, var(--accent-liquid), #8b5cf6); color: white; }
+        .provider-badge-liquid { cursor: pointer; background: linear-gradient(120deg, var(--accent-liquid), #7c3aed); border-radius: 60px; padding: 5px 14px; font-size: 0.7rem; font-weight: 700; color: white; }
+        .free-badge { font-size: 0.65rem; background: #10b98120; border-radius: 30px; padding: 2px 8px; margin-left: 8px; color: #10b981; }
+        .liquid-wave { display: inline-flex; align-items: center; gap: 8px; background: var(--glass-bg); backdrop-filter: blur(12px); border-radius: 60px; padding: 10px 20px; box-shadow: var(--shadow-liquid); }
+        .wave-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent-liquid); animation: waveBounce 1.2s infinite ease-in-out; }
+        .wave-dot:nth-child(1) { animation-delay: -0.32s; }
+        .wave-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes waveBounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1.2); opacity: 1; } }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent-glow); border-radius: 20px; }
+        .gtranslate-footer { padding: 1rem; border-top: 1px solid var(--border-glow); margin-top: auto; }
+        .gtranslate_wrapper { width: 100%; }
+        .gtranslate_wrapper select { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.3); border-radius: 60px; padding: 10px 16px; font-size: 0.85rem; font-weight: 500; color: var(--text-primary); width: 100%; cursor: pointer; transition: all 0.25s ease; appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2360a5fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>"); background-repeat: no-repeat; background-position: right 16px center; background-size: 14px; font-family: inherit; }
+        .gtranslate_wrapper select:hover { border-color: var(--accent-glow); box-shadow: 0 0 0 2px rgba(59,130,246,0.2); transform: translateY(-1px); }
+        body.dark .gtranslate_wrapper select { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238bb4fe' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>"); }
+        .sidebar-brand-liquid { transition: all 0.2s; font-size: 1.1rem; cursor: default; }
+        .loading-spinner-small { width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.6s linear infinite; display: inline-block; margin-right: 6px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .pdf-extract-notice { font-size: 0.7rem; color: var(--text-secondary); margin-left: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<div id="sidebar" class="sidebar-liquid">
+    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+      
+        <span class="sidebar-brand-liquid fw-bold rainbow-brand-text"><i class="fas fa-water me-2"></i>𓋹•нєχѕℓєυтн•𓃠</span>
+        <button id="closeSidebarBtn" class="btn btn-sm btn-link text-secondary mobile-only"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-3">
+        <button id="newChatBtn" class="btn btn-primary-liquid w-100 mb-2"><i class="fas fa-plus me-2"></i>New Chat</button>
+    </div>
+    <div id="chatHistoryList" class="flex-grow-1 overflow-auto p-2"></div>
+    <div class="gtranslate-footer">
+        <div class="gtranslate_wrapper"></div>
+    </div>
+</div>
+
+<div class="d-flex flex-column vh-100">
+    <div class="app-header d-flex justify-content-between align-items-center">
+        <div class="d-flex gap-2 align-items-center">
+            <button id="menuToggle" class="btn btn-liquid rounded-circle p-2 d-md-none"><i class="fas fa-bars"></i></button>
+            <h1 class="h6 mb-0 fw-semibold rainbow-title"><i class="fas fa-water me-1"></i>HEX AI STUDIO</h1>
+            <span class="badge bg-primary rounded-pill ms-2" id="modelBadge">нєχѕℓєυтн</span>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <button id="themeToggle" class="btn btn-liquid rounded-circle"><i class="fas fa-moon"></i></button>
+            <button id="deleteLastMsgBtn" class="btn btn-liquid rounded-circle" title="Delete last message"><i class="fas fa-trash-alt"></i></button>
+            <div class="dropdown"><button class="btn btn-liquid dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-cube"></i> Model</button><ul class="dropdown-menu dropdown-menu-end" id="modelDropdownList"></ul></div>
+            <button id="settingsBtn" class="btn btn-liquid rounded-circle"><i class="fas fa-sliders-h"></i></button>
+        </div>
+    </div>
+
+    <div class="flex-grow-1 overflow-hidden d-flex flex-column">
+        <div id="chatMessages" class="flex-grow-1 overflow-auto p-3" style="scroll-behavior: smooth;"></div>
+
+        <div class="p-3" style="background: transparent;">
+            <div class="d-flex gap-2 align-items-end">
+                <div class="flex-grow-1">
+                    <div id="promptEditor" class="prompt-editor-liquid" contenteditable="true" placeholder="Type your message... (Ctrl+Enter to send)"></div>
+                    <div id="attachmentPreviewContainer" class="attachments-bar"></div>
+                </div>
+                <button id="emojiBtn" class="btn btn-liquid rounded-circle" type="button"><i class="far fa-smile-wink"></i></button>
+                <button id="attachBtn" class="btn btn-liquid rounded-circle"><i class="fas fa-paperclip"></i></button>
+                <button id="sendBtn" class="btn btn-primary-liquid rounded-circle"><i class="fas fa-paper-plane"></i></button>
+            </div>
+            <div class="d-flex justify-content-between mt-2 px-1">
+                <span class="small text-secondary" id="tokenEstimate">0 tokens</span>
+                <span id="providerIndicator" class="provider-badge-liquid">OpenRouter</span>
+            </div>
+            <input type="file" id="fileInput" multiple accept="image/*,text/plain,.pdf" style="display: none;">
+        </div>
+    </div>
+</div>
+
+<emoji-picker id="emojiPicker"></emoji-picker>
+<div class="modal fade" id="apiModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content glass-panel border-0"><div class="modal-header border-0"><h5 class="modal-title liquid-title">⚙️SETTINGS</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label>OpenRouter Key</label><input type="password" id="orKey" class="form-control mb-2 rounded-pill"><label>Gemini Key</label><input type="password" id="geminiKey" class="form-control mb-3 rounded-pill"><button id="refreshModelsApi" class="btn btn-liquid w-100 mb-2"><i class="fas fa-sync-alt"></i>Refresh FREE Models</button><button id="saveKeysBtn" class="btn btn-primary-liquid w-100">Save & Close</button></div></div></div></div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script>
+    (function(){
+        // Configure PDF.js worker
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        }
+        
+        const editor = document.getElementById("promptEditor");
+        const emojiPicker = document.getElementById("emojiPicker");
+        const emojiBtn = document.getElementById("emojiBtn");
+        const attachBtn = document.getElementById("attachBtn");
+        const fileInput = document.getElementById("fileInput");
+        const attachmentContainer = document.getElementById("attachmentPreviewContainer");
+        
+        let pendingAttachments = [];
+        
+        function clearPendingAttachments() {
+            pendingAttachments.forEach(att => { if(att.previewUrl) URL.revokeObjectURL(att.previewUrl); });
+            pendingAttachments = [];
+            updateAttachmentUI();
+        }
+        
+        function updateAttachmentUI() {
+            attachmentContainer.innerHTML = "";
+            pendingAttachments.forEach((att, idx) => {
+                const wrapper = document.createElement("div");
+                wrapper.className = "attachment-thumb";
+                if(att.type === "image") {
+                    const img = document.createElement("img");
+                    img.src = att.previewUrl;
+                    img.alt = att.name;
+                    wrapper.appendChild(img);
+                } else if(att.type === "pdf") {
+                    const icon = document.createElement("i");
+                    icon.className = "fas fa-file-pdf fa-3x";
+                    icon.style.color = "#ef4444";
+                    wrapper.appendChild(icon);
+                    const label = document.createElement("span");
+                    label.innerText = att.name.length > 12 ? att.name.slice(0,10)+"..." : att.name;
+                    label.style.fontSize = "10px";
+                    label.style.textAlign = "center";
+                    wrapper.appendChild(label);
+                } else {
+                    const icon = document.createElement("i");
+                    icon.className = "fas fa-file-alt fa-2x";
+                    wrapper.appendChild(icon);
+                }
+                const removeBtn = document.createElement("button");
+                removeBtn.innerHTML = "✕";
+                removeBtn.className = "remove-attach";
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if(att.previewUrl) URL.revokeObjectURL(att.previewUrl);
+                    pendingAttachments.splice(idx, 1);
+                    updateAttachmentUI();
+                };
+                wrapper.appendChild(removeBtn);
+                attachmentContainer.appendChild(wrapper);
+            });
+        }
+        
+        async function extractTextFromPDF(file) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let fullText = "";
+                const maxPages = Math.min(pdf.numPages, 15);
+                for (let i = 1; i <= maxPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(" ");
+                    fullText += `\n--- Page ${i} ---\n${pageText}`;
+                    if (fullText.length > 8000) break;
+                }
+                if (fullText.length > 10000) fullText = fullText.substring(0, 10000) + "\n...[truncated]";
+                return fullText.trim() || "[No extractable text from PDF]";
+            } catch (err) {
+                console.error("PDF extraction error", err);
+                return `[Error extracting PDF text: ${err.message}]`;
+            }
+        }
+        
+        function handleFiles(files) {
+            for(let file of files) {
+                if(file.type.startsWith("image/")) {
+                    const previewUrl = URL.createObjectURL(file);
+                    pendingAttachments.push({ file, previewUrl, type: "image", name: file.name, dataURL: null });
+                } else if(file.type === "text/plain") {
+                    pendingAttachments.push({ file, previewUrl: null, type: "text", name: file.name, dataURL: null });
+                } else if(file.type === "application/pdf") {
+                    pendingAttachments.push({ file, previewUrl: null, type: "pdf", name: file.name, extractedText: null });
+                } else {
+                    LiquidApp.showToast("Only images, text & PDF files supported", true);
+                }
+            }
+            updateAttachmentUI();
+        }
+        
+        attachBtn.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", (e) => {
+            if(e.target.files.length) handleFiles(Array.from(e.target.files));
+            fileInput.value = "";
+        });
+        
+        function fileToBase64(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function insertEmojiAtCursor(emoji) {
+            if (!editor) return;
+            editor.focus();
+            const selection = window.getSelection();
+            if (!selection.rangeCount) {
+                editor.appendChild(document.createTextNode(emoji));
+                const range = document.createRange();
+                range.selectNodeContents(editor);
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            } else {
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+                const textNode = document.createTextNode(emoji);
+                range.insertNode(textNode);
+                range.setStartAfter(textNode);
+                range.setEndAfter(textNode);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+            editor.dispatchEvent(new Event('input', { bubbles: true }));
+            if(LiquidApp) LiquidApp.updateTokenCountManual();
+        }
+        
+        let isPickerOpen = false;
+        function closeEmojiPicker() { if(emojiPicker) emojiPicker.style.display = "none"; isPickerOpen = false; }
+        function openEmojiPicker() { if(emojiPicker) { emojiPicker.style.display = "block"; isPickerOpen = true; } }
+        if(emojiBtn && emojiPicker) {
+            emojiBtn.addEventListener("click", (e) => { e.stopPropagation(); isPickerOpen ? closeEmojiPicker() : openEmojiPicker(); });
+            emojiPicker.addEventListener("emoji-click", (event) => { insertEmojiAtCursor(event.detail.unicode); closeEmojiPicker(); editor.focus(); });
+            document.addEventListener("click", (e) => { if (!emojiPicker.contains(e.target) && !emojiBtn.contains(e.target) && isPickerOpen) closeEmojiPicker(); });
+        }
+        
+        const effectClasses = ["effect-rainbow", "effect-rainbow-shimmer", "effect-glitch", "effect-glow", "effect-wave", "effect-chromatic", "effect-shimmer"];
+        function getRandomEffectClass() { return effectClasses[Math.floor(Math.random() * effectClasses.length)]; }
+        
+        const LiquidApp = {
+            apiKey: null, geminiKey: null, currentChatId: null, chats: {}, selectedModel: "google/gemini-2.5-flash-exp:free",
+            models: [{ label: "Gemini 2.0 Flash (free, vision)", value: "google/gemini-2.5-flash-exp:free" },{ label: "Gemini 2.5 Pro Exp (free)", value: "google/gemini-2.5-pro-exp-03-25:free" },{ label: "Mistral 7B (free)", value: "mistralai/mistral-7b-instruct:free" }],
+            currentProvider: "openrouter",
+            async init() { this.loadKeys(); this.loadChats(); this.renderModelDropdown(); this.bindEvents(); this.initTheme(); if (!this.apiKey && !localStorage.getItem("openrouter_key")) this.showApiModal(); this.updateProviderBadgeUI(); },
+            loadKeys() { this.apiKey = localStorage.getItem("openrouter_key"); this.geminiKey = localStorage.getItem("gemini_key"); if(document.getElementById("orKey")) document.getElementById("orKey").value = this.apiKey || ""; if(document.getElementById("geminiKey")) document.getElementById("geminiKey").value = this.geminiKey || ""; },
+            saveKeys() { this.apiKey = document.getElementById("orKey").value; this.geminiKey = document.getElementById("geminiKey").value; localStorage.setItem("openrouter_key", this.apiKey); localStorage.setItem("gemini_key", this.geminiKey); this.showToast("🔐 Keys saved", false); },
+            loadChats() { const saved = localStorage.getItem("liquid_ai_chats"); if(saved) this.chats = JSON.parse(saved); if(Object.keys(this.chats).length === 0) this.createNewChat(); else this.loadChat(Object.keys(this.chats)[0]); this.renderChatList(); },
+            saveChats() { localStorage.setItem("liquid_ai_chats", JSON.stringify(this.chats)); },
+            createNewChat() { 
+                editor.innerHTML = "";
+                clearPendingAttachments();
+                this.updateTokenCountManual();
+                const id = "chat_" + Date.now(); 
+                const welcomeMessage = { role: "assistant", content: "👋HEX AI READY! SET API KEYS 🔐 IN SETTING", timestamp: new Date().toISOString(), model: "Welcome" };
+                this.chats[id] = { id, title: "Chat " + new Date().toLocaleTimeString(), messages: [welcomeMessage], createdAt: new Date().toISOString() }; 
+                this.currentChatId = id; 
+                this.saveChats(); 
+                this.loadChat(id); 
+                this.renderChatList();
+                this.scrollToBottom();
+            },
+            loadChat(chatId) { if(!this.chats[chatId]) return; this.currentChatId = chatId; clearPendingAttachments(); editor.innerHTML = ""; this.updateTokenCountManual(); const container = document.getElementById("chatMessages"); container.innerHTML = ""; this.chats[chatId].messages.forEach((msg, idx) => this.renderMessage(msg, idx)); this.renderChatList(); this.scrollToBottom(); },
+            renderMessage(msg, index) {
+                const container = document.getElementById("chatMessages");
+                const div = document.createElement("div");
+                div.className = `chat-bubble ${msg.role === "user" ? "user-bubble" : "assistant-bubble"}`;
+                div.setAttribute("data-index", index);
+                let contentHtml = "";
+                if(msg.role === "user") {
+                    let imagesHtml = "";
+                    if(msg.attachments && msg.attachments.length) {
+                        const imageAttachs = msg.attachments.filter(a=>a.type==='image');
+                        const pdfAttachs = msg.attachments.filter(a=>a.type==='pdf');
+                        if(imageAttachs.length) imagesHtml = `<div class="user-images-grid">${imageAttachs.map(img=>`<img src="${img.dataURL}" class="user-img-preview" alt="attachment" />`).join('')}</div>`;
+                        if(pdfAttachs.length) imagesHtml += `<div class="small text-secondary mt-1"><i class="fas fa-file-pdf"></i> ${pdfAttachs.map(p=>p.name).join(', ')} (text extracted)</div>`;
+                    }
+                    contentHtml = `<div>${this.escapeHtml(msg.content || "")}</div>${imagesHtml}`;
+                } else {
+                    contentHtml = `<div class="markdown-content"></div>`;
+                }
+                const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+                const modelLabel = msg.model ? msg.model : (msg.role === "assistant" ? "AI" : "You");
+                const metaHtml = `<div class="message-meta"><span class="small">${modelLabel} • ${timestamp}</span><button class="delete-msg-btn" title="Delete"><i class="fas fa-trash-alt"></i> Delete</button></div>`;
+                div.innerHTML = contentHtml + metaHtml;
+                container.appendChild(div);
+                if(msg.role === "assistant" && msg.content) {
+                    const mdDiv = div.querySelector(".markdown-content");
+                    if(mdDiv) { mdDiv.innerHTML = marked.parse(msg.content || ""); mdDiv.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block)); mdDiv.classList.add(getRandomEffectClass()); }
+                }
+                this.scrollToBottom();
+                return div;
+            },
+            async sendMessage() { 
+                const text = editor.innerText.trim();
+                if(!text && pendingAttachments.length === 0) return;
+                // Process PDFs: extract text before building user message
+                const pdfAttachments = pendingAttachments.filter(att => att.type === "pdf");
+                const extractionPromises = pdfAttachments.map(async (att) => {
+                    if (!att.extractedText) {
+                        att.extractedText = await extractTextFromPDF(att.file);
+                    }
+                    return { name: att.name, content: att.extractedText };
+                });
+                const extractedPdfs = await Promise.all(extractionPromises);
+                const finalAttachments = [];
+                for(let att of pendingAttachments) {
+                    if(att.type === "image") {
+                        const dataURL = att.dataURL ? att.dataURL : await fileToBase64(att.file);
+                        att.dataURL = dataURL;
+                        finalAttachments.push({ type: "image", dataURL, name: att.name });
+                    } else if(att.type === "text") {
+                        const content = await att.file.text();
+                        finalAttachments.push({ type: "text", content, name: att.name });
+                    } else if(att.type === "pdf") {
+                        const pdfData = extractedPdfs.find(p => p.name === att.name);
+                        finalAttachments.push({ type: "pdf", name: att.name, extractedText: pdfData.content });
+                    }
+                }
+                let userContent = text;
+                const pdfTextBlocks = finalAttachments.filter(a => a.type === "pdf").map(pdf => `📄 PDF: "${pdf.name}"\nExtracted Content:\n${pdf.extractedText.substring(0, 4000)}`).join("\n\n");
+                if (pdfTextBlocks) userContent = (userContent ? userContent + "\n\n" : "") + pdfTextBlocks;
+                const userMsg = { role: "user", content: userContent, attachments: finalAttachments.map(a => ({ type: a.type, dataURL: a.dataURL, name: a.name })), timestamp: new Date().toISOString() };
+                this.chats[this.currentChatId].messages.push(userMsg);
+                this.renderMessage(userMsg, this.chats[this.currentChatId].messages.length - 1);
+                editor.innerHTML = "";
+                clearPendingAttachments();
+                this.saveChats();
+                this.updateTokenCountManual();
+                const waitDiv = document.createElement("div");
+                waitDiv.className = "liquid-wave mt-2 mb-3";
+                waitDiv.innerHTML = `<div class="wave-dot"></div><div class="wave-dot"></div><div class="wave-dot"></div><span style="margin-left:8px;"></span>`;
+                document.getElementById("chatMessages").appendChild(waitDiv);
+                this.scrollToBottom();
+                const historyMsgs = this.chats[this.currentChatId].messages.filter(m => m.role !== "system");
+                const apiMessages = [];
+                for(const msg of historyMsgs) {
+                    if(msg.role === "user") {
+                        let contentParts = [];
+                        if(msg.content && msg.content.trim()) contentParts.push({ type: "text", text: msg.content });
+                        if(msg.attachments && msg.attachments.length) {
+                            for(const att of msg.attachments) {
+                                if(att.type === "image") contentParts.push({ type: "image_url", image_url: { url: att.dataURL } });
+                                else if(att.type === "text") contentParts.push({ type: "text", text: `[Attached file: ${att.name}]\n${att.content.substring(0,2000)}` });
+                            }
+                        }
+                        apiMessages.push({ role: "user", content: contentParts.length === 1 && contentParts[0].type === "text" ? contentParts[0].text : contentParts });
+                    } else {
+                        apiMessages.push({ role: "assistant", content: msg.content });
+                    }
+                }
+                try {
+                    if(this.currentProvider === "openrouter" && this.apiKey) await this.streamOpenRouterVision(apiMessages, waitDiv);
+                    else if(this.currentProvider === "gemini" && this.geminiKey) await this.callGeminiVision(apiMessages, waitDiv);
+                    else throw new Error("Missing API key");
+                } catch(err) { this.handleError(err, waitDiv); }
+            },
+            streamOpenRouterVision: async function(messages, waitDiv) { const res = await fetch("https://openrouter.ai/api/v1/chat/completions", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` }, body: JSON.stringify({ model: this.selectedModel, messages, stream: true, temperature: 0.7 }) }); if(!res.ok) throw new Error(`OpenRouter ${res.status}`); const reader = res.body.getReader(); const decoder = new TextDecoder(); let full = ""; const assistantMsg = { role: "assistant", content: "", model: this.selectedModel, timestamp: new Date().toISOString() }; this.chats[this.currentChatId].messages.push(assistantMsg); const assistantIndex = this.chats[this.currentChatId].messages.length - 1; waitDiv.remove(); const bubble = this.renderMessage(assistantMsg, assistantIndex); const mdDiv = bubble.querySelector(".markdown-content"); let effectApplied = false; while(true) { const {done, value} = await reader.read(); if(done) break; const chunk = decoder.decode(value); const lines = chunk.split("\n"); for(const line of lines) { if(line.startsWith("data: ")) { const data = line.slice(6); if(data === "[DONE]") continue; try { const json = JSON.parse(data); const delta = json.choices[0]?.delta?.content; if(delta) { full += delta; assistantMsg.content = full; if(mdDiv) { mdDiv.innerHTML = marked.parse(full); mdDiv.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block)); if(!effectApplied) { mdDiv.classList.add(getRandomEffectClass()); effectApplied = true; } } this.scrollToBottom(); } } catch(e) {} } } } if(mdDiv && !effectApplied) mdDiv.classList.add(getRandomEffectClass()); this.saveChats(); this.playSound(); },
+            callGeminiVision: async function(messages, waitDiv) { const lastUserMsg = messages.filter(m => m.role === "user").pop(); let parts = []; if(typeof lastUserMsg.content === 'string') parts.push({ text: lastUserMsg.content }); else if(Array.isArray(lastUserMsg.content)) { for(const part of lastUserMsg.content) { if(part.type === "text") parts.push({ text: part.text }); else if(part.type === "image_url") { const url = part.image_url.url; const base64Data = url.split(',')[1]; const mime = url.match(/data:(image\/\w+);/)?.[1] || "image/jpeg"; parts.push({ inlineData: { mimeType: mime, data: base64Data } }); } } } const payload = { contents: [{ parts }] }; const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${this.geminiKey}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); const data = await resp.json(); const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No reply from Gemini"; waitDiv.remove(); const assistantMsg = { role: "assistant", content: reply, model: "Gemini Vision", timestamp: new Date().toISOString() }; this.chats[this.currentChatId].messages.push(assistantMsg); this.renderMessage(assistantMsg, this.chats[this.currentChatId].messages.length-1); this.saveChats(); this.playSound(); },
+            async refreshModels() { if (!this.apiKey) { this.showToast("OpenRouter API key required", true); return; } const refreshBtn = document.getElementById("refreshModelsApi"); const originalHtml = refreshBtn.innerHTML; refreshBtn.innerHTML = '<span class="loading-spinner-small"></span> Fetching...'; refreshBtn.disabled = true; try { const response = await fetch("https://openrouter.ai/api/v1/models", { headers: { "Authorization": `Bearer ${this.apiKey}` } }); if (!response.ok) throw new Error(`HTTP ${response.status}`); const data = await response.json(); const freeModels = data.data.filter(model => model.pricing && model.pricing.prompt === "0" && model.pricing.completion === "0"); if (freeModels.length === 0) throw new Error("No free models found"); this.models = freeModels.map(model => ({ label: model.name || model.id, value: model.id })).slice(0, 60); if (!this.models.some(m => m.value === this.selectedModel) && this.models.length) { this.selectedModel = this.models[0].value; document.getElementById("modelBadge").innerText = this.models[0].label.split(" ")[0]; } this.renderModelDropdown(); this.showToast(`✅ Loaded ${this.models.length} free models`, false); } catch (err) { this.showToast(`❌ Failed: ${err.message}`, true); } finally { refreshBtn.innerHTML = originalHtml; refreshBtn.disabled = false; } },
+            renderModelDropdown() { const menu = document.getElementById("modelDropdownList"); if(menu){ menu.innerHTML=""; this.models.forEach(model=>{ const a=document.createElement("a"); a.className="dropdown-item d-flex justify-content-between align-items-center"; a.href="#"; a.innerHTML=`${model.label} <span class="free-badge">FREE</span>`; a.onclick=(e)=>{ e.preventDefault(); this.selectedModel=model.value; document.getElementById("modelBadge").innerText=model.label.split(" ")[0]; this.showToast(`Model: ${model.label} (vision ready)`,false); }; menu.appendChild(a); }); } },
+            renderChatList() { const container = document.getElementById("chatHistoryList"); if(!container) return; container.innerHTML=""; Object.values(this.chats).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).forEach(chat=>{ const div=document.createElement("div"); div.className="chat-history-item"; if(chat.id===this.currentChatId) div.classList.add("active"); div.innerText=chat.title|| "Chat "+new Date(chat.createdAt).toLocaleTimeString(); div.onclick=()=>this.loadChat(chat.id); container.appendChild(div); }); },
+            deleteMessage(chatId, msgIndex) { if(confirm("Delete message?")) { this.chats[chatId].messages.splice(msgIndex,1); this.saveChats(); if(this.currentChatId===chatId) this.loadChat(chatId); else this.renderChatList(); this.showToast("Deleted", false); } },
+            deleteLastMessage() { if(this.chats[this.currentChatId]?.messages.length) { if(confirm("Remove last message?")) { this.chats[this.currentChatId].messages.pop(); this.saveChats(); this.loadChat(this.currentChatId); this.showToast("Removed", false); } } },
+            toggleProvider() { if(this.currentProvider === "openrouter") { if(!this.geminiKey) { this.showToast("Set Gemini key first", true); return; } this.currentProvider = "gemini"; document.getElementById("providerIndicator").innerHTML = "Gemini AI"; } else { if(!this.apiKey) { this.showToast("Set OpenRouter key", true); return; } this.currentProvider = "openrouter"; document.getElementById("providerIndicator").innerHTML = "OpenRouter"; } this.showToast(`Switched to ${this.currentProvider} (IMAGE + PDF ready)`, false); },
+            updateProviderBadgeUI() { document.getElementById("providerIndicator").onclick = () => this.toggleProvider(); },
+            handleError(err, waitDiv) { waitDiv?.remove(); this.showToast(err.message, true); const errMsg = { role: "assistant", content: `❌ Error: ${err.message}`, model: "system", timestamp: new Date().toISOString() }; this.chats[this.currentChatId].messages.push(errMsg); this.renderMessage(errMsg, this.chats[this.currentChatId].messages.length-1); this.saveChats(); },
+            showToast(msg, isErr) { const t = document.createElement("div"); t.className = `position-fixed bottom-0 end-0 m-3 alert alert-${isErr ? "danger" : "success"} rounded-pill shadow-lg`; t.innerText = msg; document.body.appendChild(t); setTimeout(()=>t.remove(), 2500); },
+            playSound() { new Audio("data:audio/wav;base64,U3RlYWx0aCBzb3VuZA==").play().catch(e=>{}); },
+            scrollToBottom() { const c = document.getElementById("chatMessages"); if(c) c.scrollTop = c.scrollHeight; },
+            updateTokenCountManual() { const len = editor.innerText.length; document.getElementById("tokenEstimate").innerText = `~${Math.ceil(len/4)} tokens`; },
+            escapeHtml(str) { return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); },
+            showApiModal() { const modal = new bootstrap.Modal(document.getElementById("apiModal")); modal.show(); },
+            initTheme() { const dark = localStorage.getItem("dark") === "true"; if(dark) document.body.classList.add("dark"); this.updateThemeIcon(); },
+            updateThemeIcon() { const isDark = document.body.classList.contains("dark"); const btn = document.getElementById("themeToggle"); if(btn) btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; },
+            bindEvents() {
+                document.getElementById("sendBtn").onclick = () => this.sendMessage();
+                document.getElementById("newChatBtn").onclick = () => this.createNewChat();
+                document.getElementById("settingsBtn").onclick = () => this.showApiModal();
+                document.getElementById("saveKeysBtn").onclick = () => { this.saveKeys(); bootstrap.Modal.getInstance(document.getElementById("apiModal")).hide(); };
+                document.getElementById("refreshModelsApi").onclick = () => this.refreshModels();
+                document.getElementById("themeToggle").onclick = () => { document.body.classList.toggle("dark"); localStorage.setItem("dark", document.body.classList.contains("dark")); this.updateThemeIcon(); };
+                document.getElementById("deleteLastMsgBtn").onclick = () => this.deleteLastMessage();
+                editor.addEventListener("keydown", (e) => { if(e.ctrlKey && e.key === "Enter") this.sendMessage(); });
+                editor.addEventListener("input", () => this.updateTokenCountManual());
+                document.getElementById("chatMessages").addEventListener("click", (e) => { const delBtn = e.target.closest(".delete-msg-btn"); if(delBtn) { const bubble = delBtn.closest(".chat-bubble"); if(bubble && bubble.dataset.index !== undefined) this.deleteMessage(this.currentChatId, parseInt(bubble.dataset.index)); } });
+                const sidebar = document.getElementById("sidebar"), overlay = document.getElementById("sidebarOverlay");
+                document.getElementById("menuToggle").onclick = () => { sidebar.classList.add("open"); overlay.classList.add("active"); };
+                document.getElementById("closeSidebarBtn").onclick = () => { sidebar.classList.remove("open"); overlay.classList.remove("active"); };
+                overlay.onclick = () => { sidebar.classList.remove("open"); overlay.classList.remove("active"); };
+            }
+        };
+        LiquidApp.init();
+        window.LiquidApp = LiquidApp;
+    })();
+</script>
+</body>
+</html>
